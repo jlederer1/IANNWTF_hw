@@ -15,7 +15,7 @@ class Layer:
     self.n_activation = None
 
     # learning_rate
-    alpha = 0.03
+    self.alpha = 0.03
 
     print("W: ", self.W.shape, "\n", self.W, "\n")
     print("b: ", self.b.shape, "\n", self.b, "\n")
@@ -24,8 +24,8 @@ class Layer:
     return np.maximum(0, x)
 
   def forward_step(self, arr):
-    self.n_input = arr
-    self.n_preactivation = self.n_input * self.W 
+    self.n_input = np.append(arr, 1)
+    self.n_preactivation = self.n_input @ np.vstack((self.W, self.b))
     self.n_activation = self.relu(self.n_preactivation)
 
     print("input: ", self.n_input.shape, "\n", self.n_input, "\n")
@@ -40,17 +40,20 @@ class Layer:
     d_L_d_W_layer = d_L_d_d_layer * self.n_activation
     
     gradient_W_layer = self.n_input.T * (  np.where(self.n_preactivation > 0, 1, 0) @  d_L_d_a_layer)
-    gradient_B_layer = np.where(self.n_preactivation > 0, 1, 0) @  d_L_d_a_layer
-    gradient_input = ( np.where(self.n_preactivation > 0, 1, 0) * d_L_d_a_layer ) @ W.T
+    gradient_b_layer = np.where(self.n_preactivation > 0, 1, 0) @  d_L_d_a_layer
+    gradient_input = ( np.where(self.n_preactivation > 0, 1, 0) * d_L_d_a_layer ) @ self.W.T
 
     # update parameters
-    self.W = self.W - alpha * ( d_L_d_W_layer )
-    self.b = self.b - alpha * ( d_L_d_b_layer )
+    self.W = self.W - self.alpha * ( d_L_d_W_layer )
+    self.b = self.b - self.alpha * ( d_L_d_d_layer )
 
     print("gradient_W_layer: ", gradient_W_layer, "\n")
-    print("gradient_B_layer: ", gradient_B_layer, "\n")
+    print("gradient_B_layer: ", gradient_b_layer, "\n")
     print("gradient_input: ", gradient_input, "\n")
     print("gradient_input: ", gradient_input, "\n")
+
+    print("W: ", self.W.shape, "\n", self.W, "\n")
+    print("b: ", self.b.shape, "\n", self.b, "\n")
 
     return gradient_input
 
