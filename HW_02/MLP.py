@@ -17,8 +17,7 @@ class Layer:
     # learning_rate
     self.alpha = 0.03
 
-    print("W: ", self.W.shape, "\n", self.W, "\n")
-    print("b: ", self.b.shape, "\n", self.b, "\n")
+    self.loss = np.array([])
 
   def relu(self, x): 
     return np.maximum(0, x)
@@ -28,14 +27,18 @@ class Layer:
     self.n_preactivation = self.n_input @ np.vstack((self.W, self.b))
     self.n_activation = self.relu(self.n_preactivation)
 
-    print("input: ", self.n_input.shape, "\n", self.n_input, "\n")
-    print("preactivation: ", self.n_preactivation.shape, self.n_preactivation, "\n")
-    print("activation: ", self.n_activation.shape, self.n_activation, "\n")
-
     return self.n_activation
 
-  def backward_step(self, targets):
-    d_L_d_a_layer = self.n_activation - targets
+  def backward_step(self, d_L_d_a_layer):
+
+    if self.n_units == 1:
+      loss = ( (self.n_activation -  d_L_d_a_layer) ** 2 ) / 2
+      self.loss = np.append(self.loss, loss)
+      # print(loss)
+
+    if self.n_units != 1:
+      d_L_d_a_layer = self.n_activation -  d_L_d_a_layer
+
     d_L_d_d_layer = d_L_d_a_layer * np.where(self.n_activation > 0, 1, 0)
     d_L_d_W_layer = d_L_d_d_layer * self.n_activation
     
@@ -47,18 +50,34 @@ class Layer:
     self.W = self.W - self.alpha * ( d_L_d_W_layer )
     self.b = self.b - self.alpha * ( d_L_d_d_layer )
 
-    print("gradient_W_layer: ", gradient_W_layer, "\n")
-    print("gradient_B_layer: ", gradient_b_layer, "\n")
-    print("gradient_input: ", gradient_input, "\n")
-    print("gradient_input: ", gradient_input, "\n")
-
-    print("W: ", self.W.shape, "\n", self.W, "\n")
-    print("b: ", self.b.shape, "\n", self.b, "\n")
-
     return gradient_input
 
+class MLP_Gen9000:
+  def __init__(self, data):
+    self.l_HIDDEN = Layer(10, 1)
+    self.l_OUT = Layer(1, 10)
 
+    self.inputs = data[0]
+    self.targets = data[1]
 
+  def forward_step(self, x):
+    a1 = self.l_HIDDEN.forward_step(x)
+    a2 = self.l_OUT.forward_step(np.array([a1]))
+
+    return a2
+
+  def backpropagation(self, target): 
+    gradient_input1 = self.l_OUT.backward_step(target)
+    gradient_input2 = self.l_HIDDEN.backward_step(gradient_input1)
+
+  def training(self, n_epochs):
+    for i in range(n_epochs):
+      
+      for i in range(len(self.inputs)):
+        self.forward_step(self.inputs[i])
+        self.backpropagation(np.array([self.targets[i]]))
+    
+    return self.l_OUT.loss
 
 
 
